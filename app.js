@@ -2,10 +2,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
+const mongoose = require('mongoose');
+
+const Event = require('./models/event');
 
 const app = express();
-
-const events = [];
 
 app.use(bodyParser.json());
 
@@ -17,6 +18,7 @@ app.use('/api', graphqlHTTP({
                 info: String!
                 price: Float!
                 schedule: String!
+                location: String!
             }
 
             input EventInput {
@@ -24,6 +26,7 @@ app.use('/api', graphqlHTTP({
                 info: String!
                 price: Float!
                 schedule: String!
+                location: String!
             }
 
             type RootQuery {
@@ -41,22 +44,44 @@ app.use('/api', graphqlHTTP({
         `),
         rootValue: {
             events: () => {
-                return events;
+                return Event.find()
+                .then(events => {
+                    return events.map(event => {
+                        return event;
+                    });
+                })
+                .catch(err => {
+                    throw err;
+                });
             },
-            createEvent: (args) => {
-                const event = {
-                    _id: Math.random().toString(),
+            createEvent: args => {
+                const event = new Event({
                     title: args.eventInput.title,
                     info: args.eventInput.info,
                     price: +args.eventInput.price,
-                    schedule: args.eventInput.schedule
-                };
-                events.push(event);
-                return event;
+                    schedule: new Date(args.eventInput.schedule),
+                    location: args.eventInput.location
+                });
+                return event
+                    .save()
+                    .then(result => {
+                        console.log(result);
+                        return result;
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        throw err;
+                });
             }
         },
         graphiql: true
     })
 );
 
-app.listen(3000);
+mongoose.connect(`mongodb+srv://ari-admin:admin@cluster0.tdrzz.mongodb.net/Online-Ticket-Reservation?retryWrites=true&w=majority`, {useUnifiedTopology: true}, {useNewUrlParser: true})
+.then(() => {
+    app.listen(3000);
+})
+.catch(err => {
+    console.log(err);
+});
