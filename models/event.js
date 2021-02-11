@@ -5,15 +5,15 @@ const Schema = mongoose.Schema;
 const eventSchema = new Schema({
     title: {
         type: String,
-        required: true
+        required: [true, 'Please input the Title of the Event']
     },
     info: {
         type: String,
-        required: true
+        required: [true, 'Input the info for the Event']
     },
-    price: {
-        type: Number,
-        required: true
+    ticketCategory: {
+        type: Schema.Types.ObjectId,
+        ref: 'Ticket'
     },
     schedule: {
         type: Date,
